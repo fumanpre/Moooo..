@@ -157,8 +157,6 @@
         "Mooooo... the sun feels great on my moo face!",
         "Moooo... I’m always moo-ving with words!",
         "Moooooo... don’t stop me, I could moo all night!",
-
-        // New additions:
         "Moooo... did you know grass is my natural moo-tivator?",
         "Moooo... I’m moo-sically gifted, listen to my moos!",
         "Mooooooo... no one chews grass like I do!",
@@ -169,62 +167,68 @@
         "Moooo... you can always count on me for a moo-tivation boost!",
       ];
 
-      let currentPhraseIndex = 0; // track which phrase to show
+      let currentPhraseIndex = 0;
+      let voicesLoaded = false;
+      let selectedVoice = null;
 
-      function speakWithCowIntro(text) {
+      function loadVoices() {
         const voices = speechSynthesis.getVoices();
         const femaleVoices = voices.filter(
           (voice) =>
-            voice.gender === "female" ||
             voice.name.toLowerCase().includes("zira") ||
             voice.name.toLowerCase().includes("samantha") ||
             (voice.name.toLowerCase().includes("google") &&
               voice.name.toLowerCase().includes("english"))
         );
-        const selectedVoice =
-          femaleVoices[0] ||
-          voices.find(
-            (v) =>
-              v.lang.startsWith("en") && !v.name.toLowerCase().includes("male")
-          ) ||
-          null;
+        selectedVoice = femaleVoices[0] || voices[0] || null;
+        voicesLoaded = true;
+      }
 
-        speechSynthesis.cancel();
+      // Ensure voices are loaded
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+
+      function speakWithCowIntro(text) {
+        if (!voicesLoaded) {
+          loadVoices();
+        }
+
+        speechSynthesis.cancel(); // stop any ongoing speech
 
         const match = text.match(/(mo+[^ ]*)/i);
-        if (match) {
-          const mooPart = match[0];
-          const afterMoo = text.slice(text.indexOf(mooPart) + mooPart.length);
-          realMoo.currentTime = 0;
-          realMoo.play();
-          setTimeout(() => {
-            const utterance = new SpeechSynthesisUtterance(afterMoo.trim());
-            utterance.voice = selectedVoice;
-            utterance.pitch = 0.6;
-            utterance.rate = 0.6;
-            speechSynthesis.speak(utterance);
-          }, 2500);
-        } else {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.voice = selectedVoice;
-          utterance.pitch = 0.6;
-          utterance.rate = 0.6;
-          speechSynthesis.speak(utterance);
-        }
+        const afterMoo = match
+          ? text.slice(text.indexOf(match[0]) + match[0].length).trim()
+          : text;
+
+        // Play the moo sound first
+        realMoo.currentTime = 0;
+        realMoo
+          .play()
+          .then(() => {
+            // Delay speaking until moo sound plays
+            setTimeout(() => {
+              const utterance = new SpeechSynthesisUtterance(afterMoo);
+              utterance.voice = selectedVoice;
+              utterance.pitch = 0.6;
+              utterance.rate = 0.6;
+              speechSynthesis.speak(utterance);
+            }, 2800); // Adjust based on actual audio length
+          })
+          .catch((e) => {
+            console.warn(
+              "Audio play failed (possibly autoplay restrictions):",
+              e
+            );
+          });
       }
 
       cow.addEventListener("click", () => {
-        bubble.textContent = mooPhrases[currentPhraseIndex];
-        speakWithCowIntro(mooPhrases[currentPhraseIndex]);
-        currentPhraseIndex++;
-        if (currentPhraseIndex >= mooPhrases.length) {
-          currentPhraseIndex = 0; // reset to start after last phrase
-        }
-      });
+        const phrase = mooPhrases[currentPhraseIndex];
+        bubble.textContent = phrase;
+        speakWithCowIntro(phrase);
 
-      window.speechSynthesis.onvoiceschanged = () => {
-        speechSynthesis.getVoices();
-      };
+        currentPhraseIndex = (currentPhraseIndex + 1) % mooPhrases.length;
+      });
     </script>
   </body>
 </html>
