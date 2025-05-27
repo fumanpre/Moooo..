@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Munching Moo</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Comic Sans MS", cursive, sans-serif;
+        background: #e0ffe0;
+        color: white;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      /* Background video styling */
+      #bgVideo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        min-width: 100vw;
+        min-height: 100vh;
+        object-fit: cover;
+        z-index: -1;
+        pointer-events: none;
+        filter: brightness(0.6); /* Lower brightness of video only */
+      }
+
+      header {
+        background-color: rgb(105, 170, 90);
+        text-align: center;
+        padding: 2rem 1rem;
+        z-index: 1;
+      }
+      header h1 {
+        font-size: 3rem;
+        margin: 0;
+      }
+      .moo-description {
+        max-width: 600px;
+        margin: 2rem auto;
+        text-align: center;
+        font-size: 1.5rem;
+        z-index: 1;
+      }
+      .cow {
+        display: block;
+        margin: 2rem auto;
+        width: 200px;
+        transition: transform 0.2s ease-in-out;
+        cursor: pointer;
+        z-index: 1;
+      }
+      .cow:hover {
+        transform: scale(1.1) rotate(-5deg);
+      }
+
+      .bubble {
+        font-size: 2rem;
+        text-align: center;
+        margin-top: 2rem;
+        z-index: 1;
+      }
+      .cow.walking {
+        animation: walkAcross 12s linear infinite;
+        position: absolute;
+        bottom: 100px;
+      }
+
+      .cow.chewing {
+        animation: chew 0.4s ease-in-out infinite;
+      }
+
+      footer {
+        text-align: center;
+        padding: 1rem 0;
+        font-size: 1rem;
+        color: white;
+        background-color: rgba(0, 0, 0, 0.3);
+        margin-top: auto;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 🎥 Background Video -->
+    <video autoplay muted loop playsinline id="bgVideo">
+      <source src="cow.mp4" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+
+    <header>
+      <h1>
+        Munching Mooooo..
+        <img src="cow-svgrepo-com.svg" alt="cow face" height="80" />
+        of Edmonton
+      </h1>
+    </header>
+
+    <div class="moo-description">
+      <p>
+        Meet <strong>Moooo</strong> – the cow that never stops munching! She
+        loves grass, hay, and talking about herself in moos. Seriously, she just
+        won't stop moooooing. <br /><strong
+          >Click on her to make her moooo...</strong
+        >
+      </p>
+    </div>
+
+    <img
+      src="cow-face-svgrepo-com.svg"
+      alt="Moooo the Cow"
+      class="cow"
+      id="mooCow"
+    />
+
+    <div class="bubble" id="mooBubble">Moooooooooo! 😋</div>
+
+    <audio id="realMoo">
+      <source src="cow_sound.mp3" type="audio/mpeg" />
+    </audio>
+
+    <footer>
+      DON'T EVER TALK ABOUT MY STONES EVER AGAIN! THEY ARE PRECIOUS.
+      <br />Created by STOOONY
+    </footer>
+
+    <script>
+      const cow = document.getElementById("mooCow");
+      const bubble = document.getElementById("mooBubble");
+      const realMoo = document.getElementById("realMoo");
+
+      const mooPhrases = [
+        "Moooooo... I cut my own grass in my backyard!",
+        "Mooooooo... that grass was delicious!",
+        "Moooo... I could chew all day long!",
+        "Moooooo... so peaceful under the sun...",
+        "Mooooo... I dream of endless fields of grass!",
+        "Moooo... hay, hay, hay! My favorite!",
+        "Mooooooo... I'm so happy today!",
+        "Moooo... don’t touch my hay!",
+        "Moooo... Munch munch time again!",
+        "Mooooo... I just love to talk and chew!",
+        "Mooooooo.. I am more talkative than Stony",
+        "Moooooo... have you heard the latest moo gossip?",
+        "Moooo... I’m always moo-ving and grooving!",
+        "Mooooooo... can’t stop chatting about my day!",
+        "Moooo... I’ve got so much to say, moo-ve over!",
+        "Mooooo... sometimes I just sing my moos aloud!",
+        "Mooooooo... talking is my favorite pastime!",
+        "Moooo... wanna hear a funny moo joke?",
+        "Mooooo... the sun feels great on my moo face!",
+        "Moooo... I’m always moo-ving with words!",
+        "Moooooo... don’t stop me, I could moo all night!",
+
+        // New additions:
+        "Moooo... did you know grass is my natural moo-tivator?",
+        "Moooo... I’m moo-sically gifted, listen to my moos!",
+        "Mooooooo... no one chews grass like I do!",
+        "Moooo... I love sharing my moo-tastic stories!",
+        "Moooooo... my moo-sings never end!",
+        "Moooo... every day is a moo-racle!",
+        "Mooooo... I have the fluffiest tail in town!",
+        "Moooo... you can always count on me for a moo-tivation boost!",
+      ];
+
+      let currentPhraseIndex = 0; // track which phrase to show
+
+      function speakWithCowIntro(text) {
+        const voices = speechSynthesis.getVoices();
+        const femaleVoices = voices.filter(
+          (voice) =>
+            voice.gender === "female" ||
+            voice.name.toLowerCase().includes("zira") ||
+            voice.name.toLowerCase().includes("samantha") ||
+            (voice.name.toLowerCase().includes("google") &&
+              voice.name.toLowerCase().includes("english"))
+        );
+        const selectedVoice =
+          femaleVoices[0] ||
+          voices.find(
+            (v) =>
+              v.lang.startsWith("en") && !v.name.toLowerCase().includes("male")
+          ) ||
+          null;
+
+        speechSynthesis.cancel();
+
+        const match = text.match(/(mo+[^ ]*)/i);
+        if (match) {
+          const mooPart = match[0];
+          const afterMoo = text.slice(text.indexOf(mooPart) + mooPart.length);
+          realMoo.currentTime = 0;
+          realMoo.play();
+          setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance(afterMoo.trim());
+            utterance.voice = selectedVoice;
+            utterance.pitch = 0.6;
+            utterance.rate = 0.6;
+            speechSynthesis.speak(utterance);
+          }, 2500);
+        } else {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.voice = selectedVoice;
+          utterance.pitch = 0.6;
+          utterance.rate = 0.6;
+          speechSynthesis.speak(utterance);
+        }
+      }
+
+      cow.addEventListener("click", () => {
+        bubble.textContent = mooPhrases[currentPhraseIndex];
+        speakWithCowIntro(mooPhrases[currentPhraseIndex]);
+        currentPhraseIndex++;
+        if (currentPhraseIndex >= mooPhrases.length) {
+          currentPhraseIndex = 0; // reset to start after last phrase
+        }
+      });
+
+      window.speechSynthesis.onvoiceschanged = () => {
+        speechSynthesis.getVoices();
+      };
+    </script>
+  </body>
+</html>
