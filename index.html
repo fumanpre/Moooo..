@@ -168,64 +168,64 @@
       ];
 
       let currentPhraseIndex = 0;
-      let voicesLoaded = false;
+      let voicesReady = false;
       let selectedVoice = null;
 
+      // Ensure voices are available (Safari loads asynchronously)
       function loadVoices() {
         const voices = speechSynthesis.getVoices();
-        const femaleVoices = voices.filter(
-          (voice) =>
-            voice.name.toLowerCase().includes("zira") ||
-            voice.name.toLowerCase().includes("samantha") ||
-            (voice.name.toLowerCase().includes("google") &&
-              voice.name.toLowerCase().includes("english"))
-        );
-        selectedVoice = femaleVoices[0] || voices[0] || null;
-        voicesLoaded = true;
+        if (voices.length === 0) return; // try again later
+
+        selectedVoice =
+          voices.find(
+            (v) =>
+              v.name.toLowerCase().includes("zira") ||
+              v.name.toLowerCase().includes("samantha") ||
+              (v.name.toLowerCase().includes("google") &&
+                v.lang.startsWith("en"))
+          ) ||
+          voices.find((v) => v.lang.startsWith("en")) ||
+          voices[0];
+
+        voicesReady = true;
       }
 
-      // Ensure voices are loaded
       window.speechSynthesis.onvoiceschanged = loadVoices;
       loadVoices();
-
-      function speakWithCowIntro(text) {
-        if (!voicesLoaded) {
-          loadVoices();
-        }
-
-        speechSynthesis.cancel(); // stop any ongoing speech
-
-        const match = text.match(/(mo+[^ ]*)/i);
-        const afterMoo = match
-          ? text.slice(text.indexOf(match[0]) + match[0].length).trim()
-          : text;
-
-        // Play the moo sound first
-        realMoo.currentTime = 0;
-        realMoo
-          .play()
-          .then(() => {
-            // Delay speaking until moo sound plays
-            setTimeout(() => {
-              const utterance = new SpeechSynthesisUtterance(afterMoo);
-              utterance.voice = selectedVoice;
-              utterance.pitch = 0.6;
-              utterance.rate = 0.6;
-              speechSynthesis.speak(utterance);
-            }, 2800); // Adjust based on actual audio length
-          })
-          .catch((e) => {
-            console.warn(
-              "Audio play failed (possibly autoplay restrictions):",
-              e
-            );
-          });
-      }
 
       cow.addEventListener("click", () => {
         const phrase = mooPhrases[currentPhraseIndex];
         bubble.textContent = phrase;
-        speakWithCowIntro(phrase);
+
+        // Always start with the real moo
+        realMoo.currentTime = 0;
+        realMoo.play().catch((e) => console.warn("Audio blocked", e));
+
+        // Now do the speech synthesis after a delay
+        const match = phrase.match(/(mo+[^ ]*)/i);
+        const afterMoo = match
+          ? phrase.slice(match.index + match[0].length).trim()
+          : phrase;
+
+        setTimeout(() => {
+          if (!voicesReady) {
+            loadVoices(); // reattempt
+            return;
+          }
+
+          const utterance = new SpeechSynthesisUtterance(afterMoo);
+          utterance.voice = selectedVoice;
+          utterance.pitch = 0.6;
+          utterance.rate = 0.6;
+
+          // SAFARI workaround: wrap in setTimeout for some devices
+          try {
+            speechSynthesis.cancel();
+            speechSynthesis.speak(utterance);
+          } catch (err) {
+            console.warn("Speech synthesis failed:", err);
+          }
+        }, 2800); // match cow sound duration
 
         currentPhraseIndex = (currentPhraseIndex + 1) % mooPhrases.length;
       });
