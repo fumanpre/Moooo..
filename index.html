@@ -134,184 +134,101 @@
       const cow = document.getElementById("mooCow");
       const bubble = document.getElementById("mooBubble");
       const realMoo = document.getElementById("realMoo");
-      const noSpeechWarning = document.getElementById("noSpeechWarning");
-
-      // Enhanced browser support detection
-      const isSpeechSupported = "speechSynthesis" in window;
-      const isMobile =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
-        );
-
-      if (!isSpeechSupported) {
-        noSpeechWarning.style.display = "block";
-      }
 
       const mooPhrases = [
-        "Moooooo I cut my own grass in my backyard!",
-        "Mooooooo that grass was delicious!",
-        "Moooo I could chew all day long!",
-        "Moooooo so peaceful under the sun",
-        "Mooooo I dream of endless fields of grass!",
-        "Moooo hay, hay, hay! My favorite!",
-        "Mooooooo I'm so happy today!",
-        "Moooo don’t touch my hay!",
-        "Moooo Munch munch time again!",
-        "Mooooo I just love to talk and chew!",
-        "Mooooooo I am more talkative than Stony",
-        "Moooooo have you heard the latest moo gossip?",
-        "Moooo I’m always moo-ving and grooving!",
-        "Mooooooo can’t stop chatting about my day!",
-        "Moooo I’ve got so much to say, moo-ve over!",
-        "Mooooo sometimes I just sing my moos aloud!",
-        "Mooooooo talking is my favorite pastime!",
-        "Moooo wanna hear a funny moo joke?",
-        "Mooooo the sun feels great on my moo face!",
-        "Moooo I’m always moo-ving with words!",
-        "Moooooo don’t stop me, I could moo all night!",
-        "Moooo did you know grass is my natural moo-tivator?",
-        "Moooo I’m moo-sically gifted, listen to my moos!",
-        "Mooooooo no one chews grass like I do!",
-        "Moooo I love sharing my moo-tastic stories!",
-        "Moooooo my moo-sings never end!",
-        "Moooo every day is a moo-racle!",
-        "Mooooo I have the fluffiest tail in town!",
-        "Moooo you can always count on me for a moo-tivation boost!",
+        "Moooooo... I cut my own grass in my backyard!",
+        "Mooooooo... that grass was delicious!",
+        "Moooo... I could chew all day long!",
+        "Moooooo... so peaceful under the sun...",
+        "Mooooo... I dream of endless fields of grass!",
+        "Moooo... hay, hay, hay! My favorite!",
+        "Mooooooo... I'm so happy today!",
+        "Moooo... don’t touch my hay!",
+        "Moooo... Munch munch time again!",
+        "Mooooo... I just love to talk and chew!",
+        "Mooooooo.. I am more talkative than Stony",
+        "Moooooo... have you heard the latest moo gossip?",
+        "Moooo... I’m always moo-ving and grooving!",
+        "Mooooooo... can’t stop chatting about my day!",
+        "Moooo... I’ve got so much to say, moo-ve over!",
+        "Mooooo... sometimes I just sing my moos aloud!",
+        "Mooooooo... talking is my favorite pastime!",
+        "Moooo... wanna hear a funny moo joke?",
+        "Mooooo... the sun feels great on my moo face!",
+        "Moooo... I’m always moo-ving with words!",
+        "Moooooo... don’t stop me, I could moo all night!",
+        "Moooo... did you know grass is my natural moo-tivator?",
+        "Moooo... I’m moo-sically gifted, listen to my moos!",
+        "Mooooooo... no one chews grass like I do!",
+        "Moooo... I love sharing my moo-tastic stories!",
+        "Moooooo... my moo-sings never end!",
+        "Moooo... every day is a moo-racle!",
+        "Mooooo... I have the fluffiest tail in town!",
+        "Moooo... you can always count on me for a moo-tivation boost!",
       ];
 
       let currentPhraseIndex = 0;
+      let voicesReady = false;
       let selectedVoice = null;
-      let voicesLoaded = false;
 
-      // Mobile-specific voice loading solution
+      // Ensure voices are available (Safari loads asynchronously)
       function loadVoices() {
-        return new Promise((resolve) => {
-          // Immediate check
-          let voices = speechSynthesis.getVoices();
-          if (voices.length > 0) {
-            selectVoice(voices);
-            return resolve(true);
-          }
+        const voices = speechSynthesis.getVoices();
+        if (voices.length === 0) return; // try again later
 
-          // Event-based loading
-          speechSynthesis.onvoiceschanged = function () {
-            voices = speechSynthesis.getVoices();
-            if (voices.length > 0) {
-              selectVoice(voices);
-              return resolve(true);
-            }
-          };
-
-          // Timeout fallback (critical for mobile)
-          setTimeout(
-            () => {
-              voices = speechSynthesis.getVoices();
-              if (voices.length > 0) {
-                selectVoice(voices);
-                resolve(true);
-              } else {
-                console.warn("Voice loading timeout");
-                resolve(false);
-              }
-            },
-            isMobile ? 2000 : 1000
-          ); // Longer timeout for mobile
-        });
-      }
-
-      function selectVoice(voices) {
-        // Prefer mobile-friendly voices
         selectedVoice =
           voices.find(
             (v) =>
-              v.lang.includes("en") &&
-              (v.name.includes("Google") ||
-                v.name.includes("Samantha") ||
-                v.name.includes("Daniel"))
+              v.name.toLowerCase().includes("zira") ||
+              v.name.toLowerCase().includes("samantha") ||
+              (v.name.toLowerCase().includes("google") &&
+                v.lang.startsWith("en"))
           ) ||
-          voices.find((v) => v.lang.includes("en")) ||
+          voices.find((v) => v.lang.startsWith("en")) ||
           voices[0];
+
+        voicesReady = true;
       }
 
-      // Initialize voices differently for mobile
-      if (isSpeechSupported) {
-        if (isMobile) {
-          // On mobile, we'll load voices on first interaction
-          console.log("Mobile detected - voices will load on first tap");
-        } else {
-          // Desktop can preload voices
-          loadVoices().then((success) => {
-            voicesLoaded = success;
-          });
-        }
-      }
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
 
-      // Enhanced click handler with mobile workarounds
-      cow.addEventListener("click", async function handleClick() {
+      cow.addEventListener("click", () => {
         const phrase = mooPhrases[currentPhraseIndex];
         bubble.textContent = phrase;
 
-        // 1. Always play the cow sound first
-        try {
-          realMoo.currentTime = 0;
-          await realMoo
-            .play()
-            .catch((e) => console.log("Audio play prevented:", e));
-        } catch (e) {
-          console.log("Audio error:", e);
-        }
+        // Always start with the real moo
+        realMoo.currentTime = 0;
+        realMoo.play().catch((e) => console.warn("Audio blocked", e));
 
-        // 2. Handle speech synthesis
-        if (isSpeechSupported) {
-          // Mobile-specific voice loading
-          if (isMobile && !voicesLoaded) {
-            try {
-              voicesLoaded = await loadVoices();
-            } catch (e) {
-              console.log("Voice loading error:", e);
-            }
+        // Now do the speech synthesis after a delay
+        const match = phrase.match(/(mo+[^ ]*)/i);
+        const afterMoo = match
+          ? phrase.slice(match.index + match[0].length).trim()
+          : phrase;
+
+        setTimeout(() => {
+          if (!voicesReady) {
+            loadVoices(); // reattempt
+            return;
           }
 
-          const afterMoo = phrase.replace(/^mo+\s*/i, "").trim();
+          const utterance = new SpeechSynthesisUtterance(afterMoo);
+          utterance.voice = selectedVoice;
+          utterance.pitch = 0.6;
+          utterance.rate = 0.6;
 
-          if (afterMoo && voicesLoaded) {
-            // Mobile devices need this in a separate event loop
-            setTimeout(
-              () => {
-                try {
-                  speechSynthesis.cancel(); // Cancel any previous
-
-                  const utterance = new SpeechSynthesisUtterance(afterMoo);
-                  utterance.voice = selectedVoice;
-                  utterance.pitch = 0.8; // Slightly higher for mobile clarity
-                  utterance.rate = 0.9; // Slightly faster for mobile
-
-                  // Critical mobile workaround - must be in click handler
-                  setTimeout(() => {
-                    speechSynthesis.speak(utterance);
-                  }, 0);
-                } catch (err) {
-                  console.log("Speech error:", err);
-                  noSpeechWarning.style.display = "block";
-                }
-              },
-              isMobile ? 1500 : 2800
-            ); // Shorter delay for mobile
+          // SAFARI workaround: wrap in setTimeout for some devices
+          try {
+            speechSynthesis.cancel();
+            speechSynthesis.speak(utterance);
+          } catch (err) {
+            console.warn("Speech synthesis failed:", err);
           }
-        }
+        }, 2800); // match cow sound duration
 
         currentPhraseIndex = (currentPhraseIndex + 1) % mooPhrases.length;
       });
-
-      // Critical mobile fix - prevents touch delay
-      cow.addEventListener(
-        "touchend",
-        function (e) {
-          e.preventDefault();
-          handleClick.call(this);
-        },
-        { passive: false }
-      );
     </script>
   </body>
 </html>
